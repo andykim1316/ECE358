@@ -1,3 +1,4 @@
+from ipaddress import summarize_address_range
 import math
 import random
 import statistics
@@ -30,18 +31,33 @@ DES_lis = []
 # provided to us 
 c = 1000000
 l = 2000
-# p = 20
+p = 0.85
 # K = finite buffer size
 
-# lamda = (c/l)*p
-lamda = 75
+lamda = (c/l)*p
+#lamda = 75
 arrival_time = 0
 dept_time = 0
 obs_time = 0
 
+T = 1000
+eventTypeArr = [] # for organizing event types choronologically
+eventTimeArr = [] # for organizing event times chronologically
+bufferSize = 0
+n_a = 0 # no of arrival events
+n_d = 0 # no of departure events
+n_o = 0 # no of observer events
+total_events = 0 # no of all events
+last_departure_time = 0
+bufferSizeArray = [] # counting the buffer size when observer is detected
+sumOfBufferSize = 0 # intermediate variable to find En
+En = 0
+idleTime = 0 #intermediate variable to find Pidle
+Pidle = 0
+
 # code to generate arrival event
 while arrival_time < 10 or obs_time < 10:
-  
+
   #creating arrival event
   if (arrival_time < 10):
     packet_length = round(expoRanVar(1/lamda))
@@ -70,15 +86,40 @@ while arrival_time < 10 or obs_time < 10:
     
 DES_lis.sort(key = lambda x:x.time)
 
+for i in DES_lis:
+    print ("type: " +i.event + "time: ", i.time)
 
+for i in range (T): # runs from 0 to 999
 
+    while len(DES_lis) and i == math.floor(DES_lis[0].time):
+        
+        eventTypeArr.append(DES_lis[0].event)
+        eventTimeArr.append(DES_lis[0].time)
+        
+        if (DES_lis[0].event == "arrival"):
+            n_a += 1
+        elif (DES_lis[0].event == "departure"):
+            n_d += 1
+            last_departure_time = DES_lis[0].time
+        elif (DES_lis[0].event == "observer"):
+            n_o += 1
+            bufferSize += n_a - n_d
+        
+        # 0.8% error case, when arrival is followed with an arrival, fix when 5% edge case is too eh
+        if ((n_a == n_d + 1) and n_d != 0):
+            idleTime += DES_lis[0].time - last_departure_time
 
+        DES_lis.pop(0)
 
+#slow
 
+for i in range (len(eventTypeArr)):
+    print(str(eventTypeArr[i]) + " " + str(eventTimeArr[i]))
 
-  
+En = bufferSize / n_o
+Pidle = idleTime / T
 
-  
+#print(n_a)
+print(En)
+print(Pidle)
 
-  
-  
